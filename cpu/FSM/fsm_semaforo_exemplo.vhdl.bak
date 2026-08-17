@@ -1,0 +1,65 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity fsm is
+  generic (
+    TEMPORIZADOR : integer := 50_000_000
+  );
+  port (
+    clk        : in  std_logic;
+    reset      : in  std_logic;
+    semaforo_d : out std_logic;
+    semaforo_e : out std_logic;
+    semaforo_b : out std_logic;
+    semaforo_c : out std_logic
+  );
+end entity;
+
+architecture behavior of fsm is
+
+  type estado_t is (semaforo_DE, semaforo_BC);
+  signal estado_atual : estado_t;
+  signal contador     : integer range 0 to TEMPORIZADOR - 1;
+
+begin
+
+  process (clk, reset)
+  begin
+    if reset = '1' then
+      estado_atual <= semaforo_DE;
+      contador     <= 0;
+
+    elsif rising_edge(clk) then
+      if contador = TEMPORIZADOR - 1 then
+        contador <= 0;
+
+        if estado_atual = semaforo_DE then
+          estado_atual <= semaforo_BC;
+        else
+          estado_atual <= semaforo_DE;
+        end if;
+
+      else
+        contador <= contador + 1;
+      end if;
+    end if;
+  end process;
+
+  process (estado_atual)
+  begin
+    case estado_atual is
+      when semaforo_DE =>
+        semaforo_d <= '1';
+        semaforo_e <= '1';
+        semaforo_b <= '0';
+        semaforo_c <= '0';
+      when semaforo_BC =>
+        semaforo_d <= '0';
+        semaforo_e <= '0';
+        semaforo_b <= '1';
+        semaforo_c <= '1';
+    end case;
+  end process;
+
+end architecture;
